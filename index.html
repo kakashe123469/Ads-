@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bost Teacher - Gems System</title>
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src='https://libtl.com/sdk.js' data-zone='10608748' data-sdk='show_10608748'></script>
+  
+  <style>
+    :root {
+      --primary: #6c5ce7;
+      --bkash: #e2136e;
+      --nagad: #f7941d;
+      --gem-color: #00d2d3;
+      --bg: #f0f3f7;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      padding-bottom: 90px;
+      user-select: none;
+      color: #2d3436;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      padding: 25px 20px 50px 20px;
+      color: white;
+      border-radius: 0 0 30px 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    }
+
+    .header img { width: 60px; height: 60px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 15px;
+      margin-top: -30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+    }
+
+    .stat-card span { display: block; font-size: 11px; color: #636e72; font-weight: 600; text-transform: uppercase; }
+    .stat-card strong { font-size: 16px; color: #2d3436; display: block; margin-top: 4px; }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 15px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-main { background: var(--primary); color: white; }
+    .btn-main:active { transform: scale(0.95); }
+    .btn-support { background: #0088cc; color: white; text-decoration: none; display: block; text-align: center; }
+
+    .section { display: none; padding: 20px; animation: fadeInUp 0.4s ease; }
+    .section.active { display: block; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    nav {
+      position: fixed; bottom: 0; width: 100%; background: white;
+      display: flex; justify-content: space-around; padding: 12px 0;
+      box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+      z-index: 100;
+    }
+    .nav-item { text-align: center; color: #b2bec3; font-size: 10px; cursor: pointer; flex: 1; transition: 0.2s; }
+    .nav-item.active { color: var(--primary); font-weight: bold; transform: translateY(-3px); }
+
+    input, select { 
+        width: 100%; 
+        padding: 14px; 
+        margin: 8px 0; 
+        border: 1.5px solid #eee; 
+        border-radius: 12px; 
+        box-sizing: border-box; 
+        font-size: 14px;
+        outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+    
+    .withdraw-info {
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        font-size: 12px;
+        border-left: 4px solid var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="https://img.icons8.com/fluency/100/user-male-circle.png" alt="User">
+    <div>
+      <h3 id="uName" style="margin:0">User</h3>
+      <small id="uId">ID: BT-000000</small>
+    </div>
+  </div>
+
+  <div id="home" class="section active">
+    <div class="dashboard">
+      <div class="stat-card"><span>Balance</span><strong id="bal">৳ 0</strong></div>
+      <div class="stat-card"><span>Gems 💎</span><strong id="gems" style="color:#00d2d3">0</strong></div>
+      <div class="stat-card"><span>Total Ads</span><strong id="tAds">0</strong></div>
+      <div class="stat-card"><span>Total Refer</span><strong id="tRef">0</strong></div>
+    </div>
+    <div style="padding: 20px; text-align: center;">
+        <button class="btn btn-main" onclick="switchTab('earn')">কাজ শুরু করুন</button>
+        <p style="font-size: 12px; color: #888; margin-top: 10px;">Unique ID ব্যবহার করে রেফার করুন</p>
+    </div>
+  </div>
+
+  <div id="earn" class="section">
+    <div style="background:white; padding:30px; border-radius:25px; text-align:center; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+      <h3>Earning Station</h3>
+      <p>আজকের টার্গেট: <span id="dCount" style="font-weight: bold; color: var(--primary);">0</span> / 2000</p>
+      <button class="btn btn-main" onclick="watchAd()">📺 Watch Ad</button>
+      <p id="msg" style="font-size:13px; margin-top:15px; font-weight: bold; height: 20px;"></p>
+    </div>
+  </div>
+
+  <div id="refer" class="section">
+    <div style="background:white; padding:30px; border-radius:25px; text-align:center;">
+      <h3>Invite Friends</h3>
+      <p>আপনার রেফার লিঙ্ক ব্যবহার করে ইনকাম বাড়ান</p>
+      <div id="refLink" style="background:#f9f9f9; padding:12px; border-radius:10px; border:1px dashed #6c5ce7; font-size:11px; margin:15px 0; word-break:break-all; color:#6c5ce7; font-weight: bold;">Loading...</div>
+      <button class="btn btn-main" onclick="copyRef()">Copy Link</button>
+    </div>
+  </div>
+
+  <div id="withdraw" class="section">
+    <div style="background:white; padding:25px; border-radius:25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+      <h3 style="margin-top:0">Cash Out</h3>
+      
+      <div class="withdraw-info">
+        জেমস ব্যালেন্স: <b id="wGems" style="color:#00d2d3">0</b> / ৩০ (প্রয়োজন)<br>
+        মিনিমাম উইথড্র: <b>৳ ৪৫০</b>
+      </div>
+
+      <label style="font-size: 12px; font-weight: bold; color: #666;">পেমেন্ট মেথড নির্বাচন করুন:</label>
+      <select id="payMethod">
+        <option value="bKash">bKash (Personal)</option>
+        <option value="Nagad">Nagad (Personal)</option>
+      </select>
+
+      <label style="font-size: 12px; font-weight: bold; color: #666;">টাকার পরিমাণ:</label>
+      <input type="number" id="wAmt" placeholder="যেমন: 500">
+
+      <label style="font-size: 12px; font-weight: bold; color: #666;">অ্যাকাউন্ট নাম্বার:</label>
+      <input type="tel" id="wNum" placeholder="01XXXXXXXXX">
+
+      <button class="btn btn-main" onclick="handleWithdraw()">Request Withdraw</button>
+      <p style="font-size: 11px; color: #999; margin-top: 12px; text-align: center;">* উইথড্র রিকোয়েস্ট ২৪ ঘণ্টার মধ্যে প্রসেস করা হয়।</p>
+    </div>
+  </div>
+
+  <div id="support" class="section">
+    <div style="background:white; padding:30px; border-radius:25px; text-align:center;">
+      <img src="https://img.icons8.com/fluency/96/customer-support.png" style="width:60px; margin-bottom:10px;">
+      <h3>Support Center</h3>
+      <p>পেমেন্ট বা কাজ নিয়ে সমস্যার জন্য আমাদের টেলিগ্রাম সাপোর্ট চ্যানেলে যোগাযোগ করুন</p>
+      <a href="https://t.me/adsearning25_BOT" target="_blank" class="btn btn-support">Open Support Bot</a>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-item active" id="n-home" onclick="switchTab('home')">🏠<br>Home</div>
+    <div class="nav-item" id="n-earn" onclick="switchTab('earn')">🎯<br>Earn</div>
+    <div class="nav-item" id="n-refer" onclick="switchTab('refer')">👥<br>Refer</div>
+    <div class="nav-item" id="n-withdraw" onclick="switchTab('withdraw')">💳<br>Withdraw</div>
+    <div class="nav-item" id="n-support" onclick="switchTab('support')">🎧<br>Support</div>
+  </nav>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // User ID logic
+    let userId = localStorage.getItem('bt_user_id');
+    if (!userId) {
+        userId = 'BT-' + Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('bt_user_id', userId);
+    }
+
+    const BOT_USER = "YourBotName_bot"; // CHANGE THIS to your actual bot username
+    
+    // Load Data
+    let balance = parseFloat(localStorage.getItem('bal')) || 0;
+    let gems = parseInt(localStorage.getItem('gems')) || 0;
+    let ads = parseInt(localStorage.getItem('ads')) || 0;
+    let daily = JSON.parse(localStorage.getItem('daily') || `{"date":"${new Date().toDateString()}", "count":0}`);
+
+    if (daily.date !== new Date().toDateString()) {
+        daily = { date: new Date().toDateString(), count: 0 };
+    }
+
+    function syncUI() {
+      document.getElementById('uName').innerText = tg.initDataUnsafe?.user?.first_name || "Guest User";
+      document.getElementById('uId').innerText = "ID: " + userId;
+      document.getElementById('bal').innerText = "৳ " + balance.toFixed(2);
+      document.getElementById('gems').innerText = gems;
+      document.getElementById('wGems').innerText = gems;
+      document.getElementById('tAds').innerText = ads;
+      document.getElementById('dCount').innerText = daily.count;
+      document.getElementById('refLink').innerText = `https://t.me/${BOT_USER}?start=${userId}`;
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.getElementById('n-' + id).classList.add('active');
+    }
+
+    function watchAd() {
+      if(daily.count >= 2000) return alert("Daily limit over!");
+      
+      const msg = document.getElementById('msg');
+      msg.innerText = "Ad Loading...";
+      msg.style.color = "orange";
+
+      // Integration with the Ad SDK
+      if(typeof show_10608748 === 'function') {
+        show_10608748().then(() => {
+          balance += 10; 
+          ads++; 
+          daily.count++;
+          save(); 
+          syncUI();
+          msg.innerText = "Success! +৳10 Added";
+          msg.style.color = "green";
+        }).catch((err) => {
+          msg.innerText = "Ad Error! Check Internet.";
+          msg.style.color = "red";
+        });
+      } else {
+        alert("বিজ্ঞাপন লোড হতে সমস্যা হচ্ছে! (Check Adblock or HTTPS)");
+        msg.innerText = "";
+      }
+    }
+
+    function handleWithdraw() {
+      const amt = parseFloat(document.getElementById('wAmt').value);
+      const num = document.getElementById('wNum').value;
+      const method = document.getElementById('payMethod').value;
+      
+      if(gems < 30) {
+          alert("উইথড্র দিতে কমপক্ষে ৩০ জেমস লাগবে!");
+          return;
+      }
+      if(isNaN(amt) || amt < 450) {
+          alert("মিনিমাম উইথড্র ৪৫০ টাকা!");
+          return;
+      }
+      if(amt > balance) {
+          alert("আপনার ব্যালেন্সের চেয়ে বেশি টাকা উইথড্র করতে পারবেন না!");
+          return;
+      }
+      if(num.length < 11) {
+          alert("সঠিক বিকাশ/নগদ নাম্বার দিন!");
+          return;
+      }
+
+      // Logic: Process request (In production, send to your server/API)
+      alert(`রিকোয়েস্ট সফল!\nপরিমাণ: ৳${amt}\nমেথড: ${method}\nনাম্বার: ${num}\nইউজার ID: ${userId}`);
+      
+      // Reset after success (optional)
+      // balance -= amt;
+      // save();
+      // syncUI();
+    }
+
+    function save() {
+      localStorage.setItem('bal', balance);
+      localStorage.setItem('gems', gems);
+      localStorage.setItem('ads', ads);
+      localStorage.setItem('daily', JSON.stringify(daily));
+    }
+
+    function copyRef() {
+      const link = document.getElementById('refLink').innerText;
+      navigator.clipboard.writeText(link);
+      tg.showAlert("Refer link copied to clipboard!");
+    }
+
+    // Initialize
+    syncUI();
+  </script>
+</body>
+</html>
